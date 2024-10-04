@@ -3,6 +3,13 @@
 ## Summary
 This API enables the management of the pantry items in a household. 
 
+This API has the following operations:
+- **`POST`** `/pantryItems` 
+- **`GET`** `/pantryItems?name={name}&description={descr}&itemType={itemType}&isExpired={true|false}&buy={true|false}` 
+- **`GET`** `/pantryItem/{id}`
+- **`PATCH`** `/pantryItem/{id}`
+- **`DELETE`** `/pantryItem/{id}`
+
 ## Functions
 
 ### Create a Pantry Item
@@ -94,7 +101,6 @@ This method will get a pantry item by Id
 - **name** *(int)*: Name
 - **description** *(string)*: Description
 - **itemType** *(string)*: Item Type
-- **count** *(int)*: Count
 - **isExpired** *(boolean)*: Expired Flag
 - **buy** *(boolean)*: Buy flag
 
@@ -131,3 +137,6 @@ This method will get a pantry item by Id
 ><br>    "buy": true
 ><br>},
 ><br>]
+
+---
+*and more....*
