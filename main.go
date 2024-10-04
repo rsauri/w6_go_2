@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 )
 
 // Create new struct
@@ -17,14 +18,36 @@ type PantryItem struct {
 	ItemType    string `json:"itemType"`
 	Count       int    `json:"count"`
 	ExpiryDate  string `json:"expiryDate"`
+	IsExpired   bool   `json:"isExpired"`
 	Buy         bool   `json:"buy"`
 }
 
-// Initialize Variables
+// Initialize the Global Variables
 var pantryItems []PantryItem
 var nextId int = 1
 
+// Setters
+func (i *PantryItem) SetIsExpired() bool {
+	expiry, _ := time.Parse(time.DateOnly, i.ExpiryDate)
+	i.IsExpired = expiry.After(time.Now())
+	return i.IsExpired
+
+}
+
+func (i *PantryItem) SetBuy() bool {
+	if i.Count <= 1 {
+		i.Buy = true
+	} else {
+		i.Buy = false
+	}
+
+	return i.Buy
+
+}
+
 // Functions
+// Function Name: parseItemId
+// Description: Returns the value in the {id} from the URI /pantryItem/{id}
 func parseItemId(path string) (int, error) {
 
 	//Validate the URI
@@ -69,6 +92,13 @@ func getPantryItem(path string) (int, PantryItem, error) {
 
 // Method Handlers
 // GET All Pantry Items
+// The Pantry Items can be filtered. The queryable attributes are
+//
+//	---name
+//	---description
+//	---itemType
+//	---isExpired
+//	---buy
 func getItems(w http.ResponseWriter, r *http.Request) {
 
 	//Validate if the HTTP Method is correct
@@ -77,9 +107,42 @@ func getItems(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	//Respond with all items in the Pantry Item List
+	//Get the query parameters
+	q := r.URL.Query()
+	name := q.Get("name")
+	descr := q.Get("description")
+	itemType := q.Get("itemType")
+
+	var isExpired bool
+	var err error
+	if q.Has("isExpired") {
+		isExpired, err = strconv.ParseBool(q.Get("isExpired"))
+		if err != nil {
+			http.Error(w, "Query Parameter isExpired has an invalid value. Expected Value is true or false", http.StatusBadRequest)
+			return
+		}
+	}
+
+	var buy bool
+	if q.Has("buy") {
+		buy, err = strconv.ParseBool(q.Get("buy"))
+		if err != nil {
+			http.Error(w, "Query Parameter buy has an invalid value. Expected Value is true or false", http.StatusBadRequest)
+			return
+		}
+	}
+
+	//Filter the items based on the query parameters
+	var items []PantryItem
+	for _, item := range pantryItems {
+		if strings.Contains(strings.ToLower(item.Name), strings.ToLower(name)) && strings.Contains(strings.ToLower(item.Description), strings.ToLower(descr)) && strings.Contains(strings.ToLower(item.ItemType), strings.ToLower(itemType)) && (item.IsExpired == isExpired || !q.Has("isExpired")) && (item.Buy == buy || !q.Has("buy")) {
+			items = append(items, item)
+		}
+	}
+
+	//Respond with filtered Pantry Item list
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(pantryItems)
+	json.NewEncoder(w).Encode(items)
 }
 
 // GET Pantry Item by Id
@@ -119,6 +182,8 @@ func createPantryItem(w http.ResponseWriter, r *http.Request) {
 
 	//Add the new item to the Pantry Item List
 	item.ID = nextId
+	item.SetIsExpired()
+	item.SetBuy()
 	pantryItems = append(pantryItems, item)
 
 	//Increment the Id for the next Pantry Item
@@ -131,6 +196,11 @@ func createPantryItem(w http.ResponseWriter, r *http.Request) {
 }
 
 // PATCH Update the Pantry Item attributes that are updatable
+// The following attributes are not updatable:
+//
+//	---ID
+//	---IsExpired
+//	---Buy
 func updatePantryItem(w http.ResponseWriter, r *http.Request) {
 	// Validate if the HTTP Method is correct
 	if r.Method != http.MethodPatch {
@@ -150,11 +220,9 @@ func updatePantryItem(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&rItem)
 
 	//Update the Pantry Item in the Pantry Item List
-	//The following attributes are not updatable:
-	//     ID
-	//     Buy
 	rItem.ID = item.ID
-	rItem.Buy = item.Buy
+	rItem.SetIsExpired()
+	rItem.SetBuy()
 	pantryItems[i] = rItem
 
 	//Return the updated item
@@ -209,7 +277,9 @@ func main() {
 	})
 
 	//Handle the following /pantryItem/{id} methods
-	//     GET:  getItem
+	//     GET:    getItem
+	//     PATCH:  updatePantryItem
+	//     DELETE: deletePantryItem
 	http.HandleFunc("/pantryItem/{id}", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
