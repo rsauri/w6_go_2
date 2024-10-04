@@ -117,6 +117,39 @@ func createPantryItem(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// PATCH Update the Pantry Item attributes that are updatable
+func updatePantryItem(w http.ResponseWriter, r *http.Request) {
+	// Validate if the HTTP Method is correct
+	if r.Method != http.MethodPatch {
+		http.Error(w, fmt.Sprintf("Invalid request method %s", r.Method), http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Get the Pantry Item item
+	i, item, err := getPantryItem(r.URL.Path)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	//Get the Pantry Item details from the request body
+	var rItem PantryItem
+	json.NewDecoder(r.Body).Decode(&rItem)
+
+	//Update the Pantry Item in the Pantry Item List
+	//The following attributes are not updatable:
+	//     ID
+	//     Buy
+	rItem.ID = item.ID
+	rItem.Buy = item.Buy
+	pantryItems[i] = rItem
+
+	//Return the updated item
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(rItem)
+
+}
+
 func main() {
 
 	//Handle the following /pantryItems methods
@@ -139,6 +172,8 @@ func main() {
 		switch r.Method {
 		case http.MethodGet:
 			getPantryItemById(w, r)
+		case http.MethodPatch:
+			updatePantryItem(w, r)
 		default:
 			http.Error(w, fmt.Sprintf("Invalid request method %s", r.Method), http.StatusMethodNotAllowed)
 		}
