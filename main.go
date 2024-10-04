@@ -25,23 +25,36 @@ var pantryItems []PantryItem
 var nextId int = 1
 
 // Functions
-// Function Name: getPantryItem
-// Description: Returns the Pantry Item based on the ID in the URL path
-// Returns: Item Index, Pantry Item Object, Error Object
-func getPantryItem(path string) (int, PantryItem, error) {
-	var item PantryItem
+func parseItemId(path string) (int, error) {
 
 	//Validate the URI
 	//The URI should be /
 	parts := strings.Split(path, "/")
 	if len(parts) < 3 {
-		return 0, item, fmt.Errorf("invalid Path")
+		return 0, fmt.Errorf("invalid Path")
 	}
 
-	//Get the from the URI
-	iId, err := strconv.Atoi(parts[2])
+	//Get the ID from the URI
+	i, err := strconv.Atoi(parts[2])
 	if err != nil {
-		return 0, item, fmt.Errorf("unexpected Pantry Item Id data type. Expecting integer")
+		return 0, fmt.Errorf("unexpected Pantry Item Id data type. Expecting integer")
+	}
+
+	return i, nil
+}
+
+// Function Name: getPantryItem
+// Description: Returns the Pantry Item based on the ID in the URL path
+// Returns: Item Index, Pantry Item Object, Error Object
+func getPantryItem(path string) (int, PantryItem, error) {
+
+	//Initialize Variables
+	var item PantryItem
+
+	//Get the ID from the URI
+	iId, err := parseItemId(path)
+	if err != nil {
+		return 0, item, err
 	}
 
 	//Find the Pantry Item by Id
@@ -150,6 +163,35 @@ func updatePantryItem(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// DELETE Delete the Pantry Item By Id
+func deletePantryItem(w http.ResponseWriter, r *http.Request) {
+
+	// Validate if the HTTP Method is correct
+	if r.Method != http.MethodDelete {
+		http.Error(w, fmt.Sprintf("Invalid request method %s", r.Method), http.StatusMethodNotAllowed)
+		return
+	}
+
+	//Get the ID from the Request URI
+	id, err := parseItemId(r.URL.Path)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	//Delete the Pantry Item
+	for i, item := range pantryItems {
+		if item.ID == id {
+			pantryItems = append(pantryItems[:i], pantryItems[i+1:]...)
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+	}
+
+	http.Error(w, "Pantry Item Id not found", http.StatusNotFound)
+
+}
+
 func main() {
 
 	//Handle the following /pantryItems methods
@@ -174,6 +216,8 @@ func main() {
 			getPantryItemById(w, r)
 		case http.MethodPatch:
 			updatePantryItem(w, r)
+		case http.MethodDelete:
+			deletePantryItem(w, r)
 		default:
 			http.Error(w, fmt.Sprintf("Invalid request method %s", r.Method), http.StatusMethodNotAllowed)
 		}
