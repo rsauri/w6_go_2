@@ -34,7 +34,9 @@ func (i *PantryItem) SetID() {
 
 func (i *PantryItem) SetIsExpired() bool {
 	expiry, _ := time.Parse(time.DateOnly, i.ExpiryDate)
-	i.IsExpired = expiry.After(time.Now())
+	curr, _ := time.Parse(time.DateOnly, time.Now().Format(time.DateOnly))
+
+	i.IsExpired = expiry.Before(curr)
 	return i.IsExpired
 
 }
