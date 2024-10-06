@@ -27,6 +27,11 @@ var pantryItems []PantryItem
 var nextId int = 1
 
 // Setters
+func (i *PantryItem) SetID() {
+	i.ID = nextId
+	nextId++
+}
+
 func (i *PantryItem) SetIsExpired() bool {
 	expiry, _ := time.Parse(time.DateOnly, i.ExpiryDate)
 	i.IsExpired = expiry.After(time.Now())
@@ -175,23 +180,22 @@ func createPantryItem(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//Initialize Variable
-	var item PantryItem
+	var items []PantryItem
 
 	//Get the item information from the request body and insert it to the list of items
-	json.NewDecoder(r.Body).Decode(&item)
+	json.NewDecoder(r.Body).Decode(&items)
 
 	//Add the new item to the Pantry Item List
-	item.ID = nextId
-	item.SetIsExpired()
-	item.SetBuy()
-	pantryItems = append(pantryItems, item)
-
-	//Increment the Id for the next Pantry Item
-	nextId++
+	for i := 0; i<len(items); i++ {
+		items[i].SetID()
+		items[i].SetIsExpired()
+		items[i].SetBuy()
+		pantryItems = append(pantryItems, items[i])
+	}
 
 	//Write the response
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(item)
+	json.NewEncoder(w).Encode(&items)
 
 }
 
@@ -280,6 +284,8 @@ func main() {
 	//     GET:    getItem
 	//     PATCH:  updatePantryItem
 	//     DELETE: deletePantryItem
+	// If you're reading this, congratulations!
+	// But if you didn't notice this the first time, the next drink's on you!"
 	http.HandleFunc("/pantryItem/{id}", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
