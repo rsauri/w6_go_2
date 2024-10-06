@@ -172,6 +172,7 @@ func getPantryItemById(w http.ResponseWriter, r *http.Request) {
 }
 
 // POST Create a new pantry item
+// If a duplicate is found, the whole request body will be ignored
 func createPantryItem(w http.ResponseWriter, r *http.Request) {
 	// Validate if the HTTP Method is correct
 	if r.Method != http.MethodPost {
@@ -185,12 +186,33 @@ func createPantryItem(w http.ResponseWriter, r *http.Request) {
 	//Get the item information from the request body and insert it to the list of items
 	json.NewDecoder(r.Body).Decode(&items)
 
-	//Add the new item to the Pantry Item List
-	for i := 0; i<len(items); i++ {
+	//Find if there are duplicates in the request
+	for i, item1 := range items {
+		for j, item2 := range items {
+			if item1.Name == item2.Name && i != j {
+				http.Error(w, fmt.Sprintf("Duplicate item %s found", item1.Name), http.StatusNotAcceptable)
+				return
+			}
+		}
+	}
+
+	//Find if there are duplicates in the existing item list
+	for _, item1 := range items {
+		for _, item2 := range pantryItems {
+			if item1.Name == item2.Name {
+				http.Error(w, fmt.Sprintf("Duplicate item %s found", item1.Name), http.StatusNotAcceptable)
+				return
+			}
+		}
+	}
+
+	//Add the new items to the Pantry Item List
+	for i := 0; i < len(items); i++ {
 		items[i].SetID()
 		items[i].SetIsExpired()
 		items[i].SetBuy()
 		pantryItems = append(pantryItems, items[i])
+
 	}
 
 	//Write the response
