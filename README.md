@@ -165,7 +165,7 @@ This method retrieves all pantry items and supports optional filters through que
 
 #### Sample `curl` Request
 ```bash
-curl -X GET "http://localhost:8080/pantryItems?name=Toothpaste&description=Minty&itemType=Personal%20Care&isExpired=false&buy=false"
+curl -X GET "http://localhost:8080/pantryItems?name=tooth&description=paste&itemType=personal&isExpired=false&buy=true"
 ```
 #### Response Body
 - **Content-Type**: application/json
@@ -181,16 +181,6 @@ curl -X GET "http://localhost:8080/pantryItems?name=Toothpaste&description=Minty
     "expiryDate": "2024-10-05",
     "isExpired": false,
     "buy": true
-  },
-  {
-    "id": 2,
-    "name": "Carrot",
-    "description": "Carrot",
-    "itemType": "Produce",
-    "count": 3,
-    "expiryDate": "2024-12-15",
-    "isExpired": false,
-    "buy": false
   }
 ]
 ```
@@ -217,7 +207,7 @@ This method updates the details of an existing pantry item. If a duplicate item 
 ```json
 {
   "name": "Toothpaste",
-  "description": "Toothpaste",
+  "description": "Mint Toothpaste",
   "itemType": "Personal Care",
   "count": 2,
   "expiryDate": "2025-01-10"
@@ -230,7 +220,7 @@ curl -X PATCH http://localhost:8080/pantryItem/1 \
 -H "Content-Type: application/json" \
 -d '{
     "name": "Toothpaste",
-    "description": "Minty fresh toothpaste",
+    "description": "Mint Toothpaste",
     "itemType": "Personal Care",
     "count": 2,
     "expiryDate": "2025-01-10"
@@ -244,7 +234,7 @@ curl -X PATCH http://localhost:8080/pantryItem/1 \
 {
   "id": 1,
   "name": "Toothpaste",
-  "description": "Minty fresh toothpaste",
+  "description": "Mint Toothpaste",
   "itemType": "Personal Care",
   "count": 2,
   "expiryDate": "2025-01-10",
