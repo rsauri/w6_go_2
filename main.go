@@ -106,12 +106,6 @@ func getPantryItem(path string) (int, PantryItem, error) {
 //	---buy
 func getItems(w http.ResponseWriter, r *http.Request) {
 
-	//Validate if the HTTP Method is correct
-	if r.Method != http.MethodGet {
-		http.Error(w, fmt.Sprintf("Invalid request method %s", r.Method), http.StatusMethodNotAllowed)
-		return
-	}
-
 	//Get the query parameters
 	q := r.URL.Query()
 	name := q.Get("name")
@@ -153,12 +147,6 @@ func getItems(w http.ResponseWriter, r *http.Request) {
 // GET Pantry Item by Id
 func getPantryItemById(w http.ResponseWriter, r *http.Request) {
 
-	// Validate if the HTTP Method is correct
-	if r.Method != http.MethodGet {
-		http.Error(w, fmt.Sprintf("Invalid request method %s", r.Method), http.StatusMethodNotAllowed)
-		return
-	}
-
 	// Get the pantry item
 	_, item, err := getPantryItem(r.URL.Path)
 	if err != nil {
@@ -174,11 +162,6 @@ func getPantryItemById(w http.ResponseWriter, r *http.Request) {
 // POST Create a new pantry item
 // If a duplicate is found, the whole request body will be ignored
 func createPantryItem(w http.ResponseWriter, r *http.Request) {
-	// Validate if the HTTP Method is correct
-	if r.Method != http.MethodPost {
-		http.Error(w, fmt.Sprintf("Invalid request method %s", r.Method), http.StatusMethodNotAllowed)
-		return
-	}
 
 	//Initialize Variable
 	var items []PantryItem
@@ -228,11 +211,6 @@ func createPantryItem(w http.ResponseWriter, r *http.Request) {
 //	---IsExpired
 //	---Buy
 func updatePantryItem(w http.ResponseWriter, r *http.Request) {
-	// Validate if the HTTP Method is correct
-	if r.Method != http.MethodPatch {
-		http.Error(w, fmt.Sprintf("Invalid request method %s", r.Method), http.StatusMethodNotAllowed)
-		return
-	}
 
 	// Get the Pantry Item item
 	i, item, err := getPantryItem(r.URL.Path)
@@ -260,12 +238,6 @@ func updatePantryItem(w http.ResponseWriter, r *http.Request) {
 // DELETE Delete the Pantry Item By Id
 func deletePantryItem(w http.ResponseWriter, r *http.Request) {
 
-	// Validate if the HTTP Method is correct
-	if r.Method != http.MethodDelete {
-		http.Error(w, fmt.Sprintf("Invalid request method %s", r.Method), http.StatusMethodNotAllowed)
-		return
-	}
-
 	//Get the ID from the Request URI
 	id, err := parseItemId(r.URL.Path)
 	if err != nil {
@@ -286,17 +258,29 @@ func deletePantryItem(w http.ResponseWriter, r *http.Request) {
 
 }
 
+// DELETE Delete all pantry items
+func deleteAllPantryItems(w http.ResponseWriter) {
+	pantryItems = nil
+
+	//Write the response
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(&pantryItems)
+}
+
 func main() {
 
 	//Handle the following /pantryItems methods
-	//     GET:  getItems
-	//     POST: createPantryItem
+	//     GET:    getItems
+	//     POST:   createPantryItem
+	//     DELETE: deleteAllPantryItems
 	http.HandleFunc("/pantryItems", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
 			getItems(w, r)
 		case http.MethodPost:
 			createPantryItem(w, r)
+		case http.MethodDelete:
+			deleteAllPantryItems(w)
 		default:
 			http.Error(w, fmt.Sprintf("Invalid request method %s", r.Method), http.StatusMethodNotAllowed)
 		}
