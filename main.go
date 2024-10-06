@@ -212,7 +212,7 @@ func createPantryItem(w http.ResponseWriter, r *http.Request) {
 //	---Buy
 func updatePantryItem(w http.ResponseWriter, r *http.Request) {
 
-	// Get the Pantry Item item
+	// Get the Pantry Item
 	i, item, err := getPantryItem(r.URL.Path)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -222,6 +222,15 @@ func updatePantryItem(w http.ResponseWriter, r *http.Request) {
 	//Get the Pantry Item details from the request body
 	var rItem PantryItem
 	json.NewDecoder(r.Body).Decode(&rItem)
+
+	//Check if the new item name exists in the Pantry Item List
+	//If it exists, return a duplicate error
+	for _, eItem := range pantryItems {
+		if eItem.Name == rItem.Name && eItem.ID != item.ID {
+			http.Error(w, fmt.Sprintf("Duplicate item %s found", rItem.Name), http.StatusNotAcceptable)
+			return
+		}
+	}
 
 	//Update the Pantry Item in the Pantry Item List
 	rItem.ID = item.ID
