@@ -290,8 +290,8 @@ func main() {
 	//     GET:    getItem
 	//     PATCH:  updatePantryItem
 	//     DELETE: deletePantryItem
-	// If you're reading this, congratulations!
-	// But if you didn't notice this the first time, the next drink's on you!"
+	// If you're reading this, congratulations! If you missed it the first time,
+	//the next drink's on you. But if you spotted it, the drink's on me!
 	http.HandleFunc("/pantryItem/{id}", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
